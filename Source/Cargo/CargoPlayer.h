@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "CargoInteractable.h"
 #include "GameFramework/Character.h"
 #include "CargoPlayer.generated.h"
 
@@ -23,6 +24,6 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
 
-	
+	ACargoInteractable* currentInteractable;
 	
 };
