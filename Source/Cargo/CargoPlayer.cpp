@@ -2,7 +2,7 @@
 
 #include "Cargo.h"
 #include "CargoPlayer.h"
-#include "DrawDebugHelpers.h"
+#include "UnrealNetwork.h"
 
 
 // Sets default values
@@ -27,13 +27,15 @@ ACargoPlayer::ACargoPlayer(const FObjectInitializer& ObjectInitializer) : Super(
 
 	thirdPersonStaticMesh = ObjectInitializer.CreateDefaultSubobject<USkeletalMeshComponent>(this, TEXT("ThirdPersonStaticMesh"));
 	thirdPersonStaticMesh->AttachTo(RootComponent);
-	thirdPersonStaticMesh->bOnlyOwnerSee = false;
-	thirdPersonStaticMesh->bOwnerNoSee = true;
+	thirdPersonStaticMesh->SetOnlyOwnerSee(false);
+	thirdPersonStaticMesh->SetOwnerNoSee(true);
+	thirdPersonStaticMesh->CastShadow = true;
 
 	firstPersonStaticMesh = ObjectInitializer.CreateDefaultSubobject<USkeletalMeshComponent>(this, TEXT("FirstPersonStaticMesh"));
 	firstPersonStaticMesh->AttachTo(firstPersonCamera);
-	firstPersonStaticMesh->bOnlyOwnerSee = true;
-	firstPersonStaticMesh->bOwnerNoSee = false;
+	firstPersonStaticMesh->SetOnlyOwnerSee(true);
+	firstPersonStaticMesh->SetOwnerNoSee(false);
+	firstPersonStaticMesh->CastShadow = false;
 
 	cameraSpringArm = ObjectInitializer.CreateDefaultSubobject<USpringArmComponent>(this, TEXT("CameraSpringArm"));
 	cameraSpringArm->AttachTo(RootComponent);
@@ -46,6 +48,7 @@ ACargoPlayer::ACargoPlayer(const FObjectInitializer& ObjectInitializer) : Super(
 	thirstPersonCamera->AttachTo(cameraSpringArm, USpringArmComponent::SocketName);
 
 	hitLength = 50.0f;
+	stunned = false;
 }
 
 // Called when the game starts or when spawned
@@ -73,7 +76,8 @@ void ACargoPlayer::SetupPlayerInputComponent(class UInputComponent* InputCompone
 	InputComponent->BindAxis("Turn", this, &ACargoPlayer::AddControllerYawInput);
 	InputComponent->BindAxis("LookUp", this, &ACargoPlayer::LookUp);
 
-	InputComponent->BindAction("Fire", IE_Pressed, this, &ACargoPlayer::Fire);
+	InputComponent->BindAction("Fire", IE_Pressed, this, &ACargoPlayer::Fire);
+
 
 }
 
@@ -81,6 +85,7 @@ void ACargoPlayer::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLi
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
+	DOREPLIFETIME(ACargoPlayer, stunned);
 
 }
 
@@ -92,7 +97,7 @@ USkeletalMeshComponent* ACargoPlayer::GetThirdPersonStaticMesh()
 //Move the player forward and backward 
 void ACargoPlayer::MoveForward(float value)
 { 
-	if ((Controller != NULL) && (value != 0.0f)) 
+	if ((Controller != NULL) && (value != 0.0f) && !stunned)
 	{ 
 		//Find out which way is forward 
 		FRotator Rotation = Controller->GetControlRotation(); 
@@ -110,7 +115,7 @@ void ACargoPlayer::MoveForward(float value)
 //Move the player left and right 
 void ACargoPlayer::MoveRight(float value)
 {
-	if ((Controller != NULL) && (value != 0.0f))
+	if ((Controller != NULL) && (value != 0.0f) && !stunned)
 	{
 		//Find out which way is forward 
 		FRotator Rotation = Controller->GetControlRotation();
@@ -131,7 +136,7 @@ void ACargoPlayer::LookUp(float value)
 
 void ACargoPlayer::Fire()
 {
-	if (Role < ROLE_Authority)
+	if (Role < ROLE_Authority && !stunned)
 	{
 		ServerFire();
 	}
@@ -155,6 +160,7 @@ void ACargoPlayer::ServerFire_Implementation()
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Player hit !"));
 			MyPC->BecomeARagdoll();
+			MyPC->ChangeThirdPersonMeshVisibility();
 			//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Player Hit !"));
 			//MulticastDebug();
 			//MyPC->TakeHit(Damage, this);
@@ -169,6 +175,7 @@ bool ACargoPlayer::ServerFire_Validate()
 
 void ACargoPlayer::BecomeARagdoll()
 {
+
 	/*if (Role < ROLE_Authority)
 	{*/
 		ServerBecomeARagdoll();
@@ -179,13 +186,28 @@ void ACargoPlayer::ServerBecomeARagdoll_Implementation()
 {
 	thirdPersonStaticMesh->SetSimulatePhysics(true);
 	thirdPersonStaticMesh->SetCollisionProfileName("Ragdoll");
-	firstPersonStaticMesh->SetVisibility(false);
-	firstPersonCamera->Deactivate();
-	thirdPersonStaticMesh->bOwnerNoSee = false;
+	stunned = true;
 }
 
 
 bool ACargoPlayer::ServerBecomeARagdoll_Validate()
+{
+	return true;
+}
+
+void ACargoPlayer::ChangeThirdPersonMeshVisibility()
+{
+	ServerChangeThirdPersonMeshVisibility();
+}
+
+void ACargoPlayer::ServerChangeThirdPersonMeshVisibility_Implementation()
+{
+	thirdPersonStaticMesh->SetOwnerNoSee(false);
+	firstPersonStaticMesh->SetVisibility(false);
+	firstPersonCamera->Deactivate();
+}
+
+bool ACargoPlayer::ServerChangeThirdPersonMeshVisibility_Validate()
 {
 	return true;
 }

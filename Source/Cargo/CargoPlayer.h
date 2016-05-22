@@ -30,7 +30,7 @@ public:
 
 	//the camera of the firstPersonView
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cargo - Camera")
-		UCameraComponent* firstPersonCamera;
+	UCameraComponent* firstPersonCamera;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cargo - Camera")
 	USpringArmComponent* cameraSpringArm;
@@ -38,29 +38,33 @@ public:
 
 	//the mesh of the firstPersonView
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cargo - Character")
-		USkeletalMeshComponent* firstPersonStaticMesh;
+	USkeletalMeshComponent* firstPersonStaticMesh;
 
 	//the mesh of the thirdPersonView
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cargo - Character")
-		USkeletalMeshComponent* thirdPersonStaticMesh;
+	USkeletalMeshComponent* thirdPersonStaticMesh;
 
 	USkeletalMeshComponent* GetThirdPersonStaticMesh();
 
 	//length of the vector when a player fire
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cargo - variables")
-		float hitLength;
+	float hitLength;
+
+	//if the player is stunned or not..
+	UPROPERTY(Replicated)
+	bool stunned;
 
 	//Move the player forward and backward 
 	UFUNCTION(BlueprintCallable, Category = "Cargo - Fonctions")
-		void MoveForward(float value); 
+	void MoveForward(float value); 
 	
 	//Move the player left and right 
 	UFUNCTION(BlueprintCallable, Category = "Cargo - Fonctions")
-		void MoveRight(float value);
+	void MoveRight(float value);
 	
 	//Rotate the camera Up and Down
 	UFUNCTION(BlueprintCallable, Category = "Cargo - Fonctions")
-		void LookUp(float value);
+	void LookUp(float value);
 
 	/** Handle the fire when the player hit the left mouse button (CLIENT)*/
 	void Fire();
@@ -79,6 +83,17 @@ public:
 	void ServerBecomeARagdoll();
 	virtual void ServerBecomeARagdoll_Implementation();
 	virtual bool ServerBecomeARagdoll_Validate();
+
+	/** Handle the fire when the player hit the left mouse button (CLIENT)*/
+	void ChangeThirdPersonMeshVisibility();
+
+	/** Handle the fire when the player hit the left mouse button (SERVER)*/
+	UFUNCTION(Reliable, client, WithValidation)
+	void ServerChangeThirdPersonMeshVisibility();
+	virtual void ServerChangeThirdPersonMeshVisibility_Implementation();
+	virtual bool ServerChangeThirdPersonMeshVisibility_Validate();
+
+
 
 
 private:
