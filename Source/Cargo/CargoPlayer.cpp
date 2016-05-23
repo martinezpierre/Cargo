@@ -186,6 +186,7 @@ void ACargoPlayer::ServerBecomeARagdoll_Implementation()
 {
 	thirdPersonStaticMesh->SetSimulatePhysics(true);
 	thirdPersonStaticMesh->SetCollisionProfileName("Ragdoll");
+	GetCapsuleComponent()->SetCollisionProfileName("NoCollision");
 	stunned = true;
 }
 
