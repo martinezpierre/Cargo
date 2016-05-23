@@ -161,6 +161,7 @@ void ACargoPlayer::ServerFire_Implementation()
 			UE_LOG(LogTemp, Warning, TEXT("Player hit !"));
 			MyPC->BecomeARagdoll();
 			MyPC->ChangeThirdPersonMeshVisibility();
+			MyPC->ServerBecomeARagdoll();
 			//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Player Hit !"));
 			//MulticastDebug();
 			//MyPC->TakeHit(Damage, this);
