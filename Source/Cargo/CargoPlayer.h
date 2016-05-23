@@ -46,13 +46,27 @@ public:
 
 	USkeletalMeshComponent* GetThirdPersonStaticMesh();
 
+	//the place where the player will hold ragdolls and objects
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cargo - Character")
+	UArrowComponent* holdPlace;
+
 	//length of the vector when a player fire
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cargo - variables")
 	float hitLength;
 
+	//length of the vector when a player want to pick up an object or a ragdoll
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cargo - variables")
+	float pickUpLength;
+
 	//if the player is stunned or not..
 	UPROPERTY(Replicated)
 	bool stunned;
+
+	//if the player is carrying object or not..
+	UPROPERTY(Replicated)
+	bool isCarrying;
+
+	ACargoPlayer* pickedUpRagdoll;
 
 	//Move the player forward and backward 
 	UFUNCTION(BlueprintCallable, Category = "Cargo - Fonctions")
@@ -65,6 +79,10 @@ public:
 	//Rotate the camera Up and Down
 	UFUNCTION(BlueprintCallable, Category = "Cargo - Fonctions")
 	void LookUp(float value);
+
+	//Return if the player is stun, true = stunned
+	UFUNCTION(BlueprintCallable, Category = "Cargo - Fonctions")
+	bool IsStunned();
 
 	/** Handle the fire when the player hit the left mouse button (CLIENT)*/
 	void Fire();
@@ -93,8 +111,23 @@ public:
 	virtual void ServerChangeThirdPersonMeshVisibility_Implementation();
 	virtual bool ServerChangeThirdPersonMeshVisibility_Validate();
 
+	/** Handle the fire when the player hit the left mouse button (CLIENT)*/
+	void Action();
 
+	/** Handle the fire when the player hit the left mouse button (SERVER)*/
+	UFUNCTION(Reliable, Server, WithValidation)
+	void ServerAction();
+	virtual void ServerAction_Implementation();
+	virtual bool ServerAction_Validate();
 
+	/** Handle the fire when the player hit the left mouse button (CLIENT)*/
+	void UpdatePickedUpRagdoll();
+
+	/** Handle the fire when the player hit the left mouse button (SERVER)*/
+	UFUNCTION(Reliable, NetMulticast, WithValidation)
+	void ServerUpdatePickedUpRagdoll();
+	virtual void ServerUpdatePickedUpRagdoll_Implementation();
+	virtual bool ServerUpdatePickedUpRagdoll_Validate();
 
 private:
 
