@@ -6,6 +6,8 @@
 #include "CargoActor.h"
 #include "CargoInteractable.generated.h"
 
+class ACargoPlayer;
+
 /**
  * 
  */
@@ -24,9 +26,14 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaSeconds) override;
 	
-	virtual void Activate();
+	virtual void Interact(ACargoActor* user);
 
 private:
 
 	class USphereComponent* detection;
+
+protected:
+
+	int nbActors;
+
 };

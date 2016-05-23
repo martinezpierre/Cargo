@@ -41,9 +41,11 @@ void ACargoInteractable::Tick(float DeltaTime)
 			UE_LOG(LogTemp, Warning, TEXT("Player detected"));
 		}
 	}
+
+	nbActors = actors.Num();
 }
 
-void ACargoInteractable::Activate()
+void ACargoInteractable::Interact(ACargoActor* user)
 {
 
 }

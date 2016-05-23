@@ -3,6 +3,30 @@
 #include "Cargo.h"
 #include "CargoPickable.h"
 
+ACargoPickable::ACargoPickable()
+{
+	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	PrimaryActorTick.bCanEverTick = true;
 
+}
+
+// Called when the game starts or when spawned
+void ACargoPickable::BeginPlay()
+{
+	Super::BeginPlay();
+
+}
+
+// Called every frame
+void ACargoPickable::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+}
+
+void ACargoPickable::Interact(ACargoActor* user)
+{
+	//be picked
+}
 
 

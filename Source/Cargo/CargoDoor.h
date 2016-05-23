@@ -22,8 +22,23 @@ public:
 
 	// Called every frame
 	virtual void Tick(float DeltaSeconds) override;
+
+	virtual void Interact(ACargoActor* user) override;
 	
 	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
 	int detectionRadius;
 	
+private:
+
+	FVector step;
+
+	void OpenDoor(float speed);
+
+	void CloseDoor(float speed);
+
+	bool canOpen;
+
+	FVector openPos;
+	FVector closedPos;
+
 };
