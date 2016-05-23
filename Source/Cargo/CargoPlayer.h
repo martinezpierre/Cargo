@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "CargoInteractable.h"
 #include "GameFramework/Character.h"
 #include "CargoPlayer.generated.h"
 
@@ -93,7 +94,7 @@ public:
 	virtual void ServerChangeThirdPersonMeshVisibility_Implementation();
 	virtual bool ServerChangeThirdPersonMeshVisibility_Validate();
 
-
+	ACargoInteractable* currentInteractable;
 
 
 private:
