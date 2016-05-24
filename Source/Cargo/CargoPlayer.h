@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "CargoInteractable.h"
 #include "GameFramework/Character.h"
 #include "CargoPlayer.generated.h"
 
@@ -128,6 +129,8 @@ public:
 	void ServerUpdatePickedUpRagdoll();
 	virtual void ServerUpdatePickedUpRagdoll_Implementation();
 	virtual bool ServerUpdatePickedUpRagdoll_Validate();
+
+	ACargoInteractable* currentInteractable;
 
 private:
 
