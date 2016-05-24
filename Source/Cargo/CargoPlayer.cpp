@@ -3,7 +3,7 @@
 #include "Cargo.h"
 #include "CargoPlayer.h"
 #include "UnrealNetwork.h"
-
+#include "CargoInteractable.h"
 
 // Sets default values
 ACargoPlayer::ACargoPlayer()
@@ -47,8 +47,14 @@ ACargoPlayer::ACargoPlayer(const FObjectInitializer& ObjectInitializer) : Super(
 	thirstPersonCamera = ObjectInitializer.CreateDefaultSubobject<UCameraComponent>(this, TEXT("ThirdPersonCamera"));
 	thirstPersonCamera->AttachTo(cameraSpringArm, USpringArmComponent::SocketName);
 
+	holdPlace = ObjectInitializer.CreateDefaultSubobject<UArrowComponent>(this, TEXT("HoldPlace"));
+	holdPlace->AttachTo(firstPersonStaticMesh);
+
 	hitLength = 50.0f;
 	stunned = false;
+	isCarrying = false;
+	pickUpLength = 200.0f;
+	pickedUpRagdoll = nullptr;
 }
 
 // Called when the game starts or when spawned
@@ -77,6 +83,7 @@ void ACargoPlayer::SetupPlayerInputComponent(class UInputComponent* InputCompone
 	InputComponent->BindAxis("LookUp", this, &ACargoPlayer::LookUp);
 
 	InputComponent->BindAction("Fire", IE_Pressed, this, &ACargoPlayer::Fire);
+	InputComponent->BindAction("Action", IE_Pressed, this, &ACargoPlayer::Action);
 
 
 }
@@ -134,6 +141,11 @@ void ACargoPlayer::LookUp(float value)
 	firstPersonCamera->SetRelativeRotation(rot);*/
 }
 
+bool ACargoPlayer::IsStunned()
+{
+	return stunned;
+}
+
 void ACargoPlayer::Fire()
 {
 	if (Role < ROLE_Authority && !stunned)
@@ -156,14 +168,12 @@ void ACargoPlayer::ServerFire_Implementation()
 	if (GetWorld()->LineTraceSingleByChannel(HitInfo, Start, End, ECollisionChannel::ECC_Visibility))
 	{
 		auto MyPC = Cast<ACargoPlayer>(HitInfo.GetActor());
-		if (MyPC) 
+		if (MyPC && !MyPC->IsStunned())
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Player hit !"));
 			MyPC->BecomeARagdoll();
 			MyPC->ChangeThirdPersonMeshVisibility();
-			//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Player Hit !"));
-			//MulticastDebug();
-			//MyPC->TakeHit(Damage, this);
+			MyPC->ServerBecomeARagdoll();
 		}
 	}
 }
@@ -186,6 +196,7 @@ void ACargoPlayer::ServerBecomeARagdoll_Implementation()
 {
 	thirdPersonStaticMesh->SetSimulatePhysics(true);
 	thirdPersonStaticMesh->SetCollisionProfileName("Ragdoll");
+	GetCapsuleComponent()->SetCollisionProfileName("NoCollision");
 	stunned = true;
 }
 
@@ -208,6 +219,67 @@ void ACargoPlayer::ServerChangeThirdPersonMeshVisibility_Implementation()
 }
 
 bool ACargoPlayer::ServerChangeThirdPersonMeshVisibility_Validate()
+{
+	return true;
+}
+
+void ACargoPlayer::Action()
+{
+
+	//location the PC is focused on
+	const FVector Start = firstPersonCamera->GetComponentLocation();
+	//1000 units in facing direction of PC (500 units in front of the camera)
+	const FVector End = Start + (firstPersonCamera->GetForwardVector() * pickUpLength);
+	FHitResult HitInfo;
+	FCollisionQueryParams QParams;
+	ECollisionChannel Channel = ECollisionChannel::ECC_Visibility;
+	FCollisionQueryParams OParams = FCollisionQueryParams::DefaultQueryParam;
+
+	if (GetWorld()->LineTraceSingleByChannel(HitInfo, Start, End, ECollisionChannel::ECC_Visibility))
+	{
+		auto ragdoll = Cast<ACargoPlayer>(HitInfo.GetActor());
+		if (ragdoll && ragdoll->IsStunned())
+		{
+			UE_LOG(LogTemp, Warning, TEXT("pickup Ragdoll"));
+			pickedUpRagdoll = ragdoll;
+			UpdatePickedUpRagdoll();
+		}
+		
+		auto object = Cast<ACargoInteractable>(HitInfo.GetActor());
+
+
+	}
+
+	if (Role < ROLE_Authority && !stunned)
+	{
+		ServerAction();
+	}
+}
+
+void ACargoPlayer::ServerAction_Implementation()
+{
+	Action();
+}
+
+bool ACargoPlayer::ServerAction_Validate()
+{
+	return true;
+}
+
+void ACargoPlayer::UpdatePickedUpRagdoll()
+{
+	ServerUpdatePickedUpRagdoll();
+}
+
+void ACargoPlayer::ServerUpdatePickedUpRagdoll_Implementation()
+{
+	if (pickedUpRagdoll)
+	{
+		pickedUpRagdoll->SetActorLocation(holdPlace->GetComponentLocation());
+	}
+}
+
+bool ACargoPlayer::ServerUpdatePickedUpRagdoll_Validate()
 {
 	return true;
 }
