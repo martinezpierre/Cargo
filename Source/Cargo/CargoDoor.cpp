@@ -2,6 +2,7 @@
 
 #include "Cargo.h"
 #include "CargoDoor.h"
+#include "UnrealNetwork.h"
 
 ACargoDoor::ACargoDoor()
 {
@@ -18,11 +19,9 @@ void ACargoDoor::BeginPlay()
 
 	canOpen = false;
 
-	closedPos = GetActorLocation();
+	closedPos = mesh->GetComponentLocation();
 
 	openPos = closedPos + FVector(0,0,400);
-
-	Interact(nullptr);
 
 }
 
@@ -31,50 +30,73 @@ void ACargoDoor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (nbActors <= 0) 
+	SetDoorPosition();
+}
+
+
+void ACargoDoor::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ACargoDoor, canOpen);
+
+}
+
+void ACargoDoor::Interact(ACargoPlayer* user)
+{
+	Super::Interact(user);
+
+	OpenDoorMulticast(10,true);
+
+	UE_LOG(LogTemp, Warning, TEXT("Player detected"));
+}
+
+void ACargoDoor::SetDoorPosition()
+{
+	if (nbActors <= 0)
 	{
 		canOpen = false;
 	}
 
-	if (canOpen && GetActorLocation()!= openPos) 
+	if (canOpen && mesh->GetComponentLocation() != openPos)
 	{
-		FVector newPos = GetActorLocation() + step;
+		FVector newPos = mesh->GetComponentLocation() + step;
 
-		SetActorLocation(newPos,false);
+		mesh->SetWorldLocation(newPos, false);
 	}
-	else if (!canOpen && GetActorLocation() != closedPos) 
+	else if (!canOpen && mesh->GetComponentLocation() != closedPos)
 	{
-		FVector newPos = GetActorLocation() - step;
+		FVector newPos = mesh->GetComponentLocation() - step;
 
-		SetActorLocation(newPos, false);
+		mesh->SetWorldLocation(newPos, false);
 	}
 }
 
-void ACargoDoor::Interact(ACargoActor* user)
+void ACargoDoor::OpenDoor(float speed, bool b)
 {
-	Super::Interact(user);
+	canOpen = b;
 
-	OpenDoor(10);
-
-	//UE_LOG(LogTemp, Warning, TEXT("Player detected"));
+	step = (openPos - closedPos) / 1000 * speed;
 }
 
-void ACargoDoor::OpenDoor(float speed)
+void ACargoDoor::OpenDoorMulticast(float speed, bool b)
 {
-	canOpen = true;
-
-	step = (openPos-closedPos) / 1000 * speed;
-
-}
-
-void ACargoDoor::CloseDoor(float speed)
-{
-	canOpen = false;
+	canOpen = b;
 
 	step = (openPos - closedPos) / 1000 * speed;
 
+	ServerOpenDoorMulticast(speed, b);
 }
 
+void ACargoDoor::ServerOpenDoorMulticast_Implementation(float speed, bool b)
+{
+	canOpen = b;
 
+	step = (openPos - closedPos) / 1000 * speed;
+}
 
+bool ACargoDoor::ServerOpenDoorMulticast_Validate(float speed, bool b)
+{
+	return true;
+}
 

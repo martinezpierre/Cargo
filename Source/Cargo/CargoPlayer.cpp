@@ -53,7 +53,7 @@ ACargoPlayer::ACargoPlayer(const FObjectInitializer& ObjectInitializer) : Super(
 	hitLength = 50.0f;
 	stunned = false;
 	isCarrying = false;
-	pickUpLength = 200.0f;
+	pickUpLength = 500.0f;
 	pickedUpRagdoll = nullptr;
 }
 
@@ -93,6 +93,7 @@ void ACargoPlayer::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLi
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ACargoPlayer, stunned);
+	DOREPLIFETIME(ACargoPlayer, pickUpLength);
 
 }
 
@@ -226,7 +227,7 @@ bool ACargoPlayer::ServerChangeThirdPersonMeshVisibility_Validate()
 void ACargoPlayer::Action()
 {
 
-	//location the PC is focused on
+	/*//location the PC is focused on
 	const FVector Start = firstPersonCamera->GetComponentLocation();
 	//1000 units in facing direction of PC (500 units in front of the camera)
 	const FVector End = Start + (firstPersonCamera->GetForwardVector() * pickUpLength);
@@ -247,8 +248,12 @@ void ACargoPlayer::Action()
 		
 		auto object = Cast<ACargoInteractable>(HitInfo.GetActor());
 
-
-	}
+		if (object) 
+		{
+			UE_LOG(LogTemp, Warning, TEXT("interact 1"));
+			object->Interact(this);
+		}
+	}*/
 
 	if (Role < ROLE_Authority && !stunned)
 	{
@@ -258,7 +263,34 @@ void ACargoPlayer::Action()
 
 void ACargoPlayer::ServerAction_Implementation()
 {
-	Action();
+	//Action();
+	//location the PC is focused on
+	const FVector Start = firstPersonCamera->GetComponentLocation();
+	//1000 units in facing direction of PC (500 units in front of the camera)
+	const FVector End = Start + (firstPersonCamera->GetForwardVector() * pickUpLength);
+	FHitResult HitInfo;
+	FCollisionQueryParams QParams;
+	ECollisionChannel Channel = ECollisionChannel::ECC_Visibility;
+	FCollisionQueryParams OParams = FCollisionQueryParams::DefaultQueryParam;
+
+	if (GetWorld()->LineTraceSingleByChannel(HitInfo, Start, End, ECollisionChannel::ECC_Visibility))
+	{
+		auto ragdoll = Cast<ACargoPlayer>(HitInfo.GetActor());
+		if (ragdoll && ragdoll->IsStunned())
+		{
+			UE_LOG(LogTemp, Warning, TEXT("pickup Ragdoll"));
+			pickedUpRagdoll = ragdoll;
+			UpdatePickedUpRagdoll();
+		}
+
+		auto object = Cast<ACargoInteractable>(HitInfo.GetActor());
+
+		if (object)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("interact 1"));
+			object->Interact(this);
+		}
+	}
 }
 
 bool ACargoPlayer::ServerAction_Validate()

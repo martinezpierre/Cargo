@@ -23,7 +23,7 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaSeconds) override;
 
-	virtual void Interact(ACargoActor* user) override;
+	virtual void Interact(ACargoPlayer* user) override;
 
 	
 	

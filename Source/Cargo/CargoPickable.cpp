@@ -24,7 +24,7 @@ void ACargoPickable::Tick(float DeltaTime)
 
 }
 
-void ACargoPickable::Interact(ACargoActor* user)
+void ACargoPickable::Interact(ACargoPlayer* user)
 {
 	//be picked
 }

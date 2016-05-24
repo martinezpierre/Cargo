@@ -13,6 +13,9 @@ ACargoInteractable::ACargoInteractable()
 	detection = CreateDefaultSubobject<USphereComponent>(TEXT("Detection"));
 	detection->AttachTo(RootComponent);
 	detection->SetSphereRadius(300);
+
+	mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
+	mesh->AttachTo(RootComponent);
 }
 
 // Called when the game starts or when spawned
@@ -38,14 +41,14 @@ void ACargoInteractable::Tick(float DeltaTime)
 
 			player->currentInteractable = this;
 
-			UE_LOG(LogTemp, Warning, TEXT("Player detected"));
+			//UE_LOG(LogTemp, Warning, TEXT("Player detected"));
 		}
 	}
 
 	nbActors = actors.Num();
 }
 
-void ACargoInteractable::Interact(ACargoActor* user)
+void ACargoInteractable::Interact(ACargoPlayer* user)
 {
 
 }

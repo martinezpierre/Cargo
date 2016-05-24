@@ -56,7 +56,7 @@ public:
 	float hitLength;
 
 	//length of the vector when a player want to pick up an object or a ragdoll
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cargo - variables")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Cargo - variables")
 	float pickUpLength;
 
 	//if the player is stunned or not..

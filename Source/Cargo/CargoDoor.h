@@ -23,22 +23,42 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaSeconds) override;
 
-	virtual void Interact(ACargoActor* user) override;
+	// Called to replicate variables
+	void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const;
+
+	virtual void Interact(ACargoPlayer* user) override;
 	
 	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
 	int detectionRadius;
-	
-private:
 
-	FVector step;
+	/** Handle the fire when the player hit the left mouse button (CLIENT)*/
+	void SetDoorPosition();
 
-	void OpenDoor(float speed);
+	/** Handle the fire when the player hit the left mouse button (CLIENT)*/
+	void OpenDoor(float speed, bool b);
 
-	void CloseDoor(float speed);
+	/** Handle the fire when the player hit the left mouse button (CLIENT)*/
+	void OpenDoorMulticast(float speed, bool b);
 
+	/** Handle the fire when the player hit the left mouse button (SERVER)*/
+	UFUNCTION(Reliable, NetMulticast, WithValidation)
+	void ServerOpenDoorMulticast(float speed, bool b);
+	virtual void ServerOpenDoorMulticast_Implementation(float speed, bool b);
+	virtual bool ServerOpenDoorMulticast_Validate(float speed, bool b);
+
+	UPROPERTY(Replicated)
 	bool canOpen;
 
+	UPROPERTY(Replicated)
+	FVector step;
+
+	UPROPERTY(Replicated)
 	FVector openPos;
+
+	UPROPERTY(Replicated)
 	FVector closedPos;
+
+private:
+
 
 };
