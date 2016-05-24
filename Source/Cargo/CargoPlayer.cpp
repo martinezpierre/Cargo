@@ -174,7 +174,7 @@ void ACargoPlayer::ServerFire_Implementation()
 			UE_LOG(LogTemp, Warning, TEXT("Player hit !"));
 			MyPC->BecomeARagdoll();
 			MyPC->ChangeThirdPersonMeshVisibility();
-			MyPC->ServerBecomeARagdoll();
+			//MyPC->ServerBecomeARagdoll();
 		}
 	}
 }
@@ -186,9 +186,8 @@ bool ACargoPlayer::ServerFire_Validate()
 
 void ACargoPlayer::BecomeARagdoll()
 {
-
-	/*if (Role < ROLE_Authority)
-	{*/
+	//if (Role < ROLE_Authority)
+	//{
 		ServerBecomeARagdoll();
 	//}
 }
