@@ -50,6 +50,9 @@ ACargoPlayer::ACargoPlayer(const FObjectInitializer& ObjectInitializer) : Super(
 	holdPlace = ObjectInitializer.CreateDefaultSubobject<UArrowComponent>(this, TEXT("HoldPlace"));
 	holdPlace->AttachTo(firstPersonStaticMesh);
 
+	grabber = ObjectInitializer.CreateDefaultSubobject<UPhysicsHandleComponent>(this, TEXT("grabber"));
+	grabber->GrabComponent(thirdPersonStaticMesh, "spine_02", holdPlace->GetComponentLocation(), true);
+
 	hitLength = 50.0f;
 	stunned = false;
 	isCarrying = false;
@@ -69,6 +72,18 @@ void ACargoPlayer::Tick( float DeltaTime )
 {
 	Super::Tick( DeltaTime );
 
+	if (pickedUpRagdoll != nullptr)
+	{
+		//pickedUpRagdoll->SetActorLocation(holdPlace->GetComponentLocation());
+		grabber->SetTargetLocation(holdPlace->GetComponentLocation());
+		UpdatePickedUpRagdoll();
+	}
+
+	if (stunned)
+	{
+		//thirdPersonStaticMesh->SetWorldLocation(RootComponent->GetComponentLocation());
+		
+	}
 }
 
 // Called to bind functionality to input
@@ -195,8 +210,8 @@ void ACargoPlayer::BecomeARagdoll()
 void ACargoPlayer::ServerBecomeARagdoll_Implementation()
 {
 	thirdPersonStaticMesh->SetSimulatePhysics(true);
-	thirdPersonStaticMesh->SetCollisionProfileName("Ragdoll");
-	GetCapsuleComponent()->SetCollisionProfileName("NoCollision");
+	thirdPersonStaticMesh->SetCollisionProfileName("CargoRagdoll");
+	GetCapsuleComponent()->SetCollisionProfileName("CargoRagdoll");
 	stunned = true;
 }
 
@@ -225,35 +240,6 @@ bool ACargoPlayer::ServerChangeThirdPersonMeshVisibility_Validate()
 
 void ACargoPlayer::Action()
 {
-
-	/*//location the PC is focused on
-	const FVector Start = firstPersonCamera->GetComponentLocation();
-	//1000 units in facing direction of PC (500 units in front of the camera)
-	const FVector End = Start + (firstPersonCamera->GetForwardVector() * pickUpLength);
-	FHitResult HitInfo;
-	FCollisionQueryParams QParams;
-	ECollisionChannel Channel = ECollisionChannel::ECC_Visibility;
-	FCollisionQueryParams OParams = FCollisionQueryParams::DefaultQueryParam;
-
-	if (GetWorld()->LineTraceSingleByChannel(HitInfo, Start, End, ECollisionChannel::ECC_Visibility))
-	{
-		auto ragdoll = Cast<ACargoPlayer>(HitInfo.GetActor());
-		if (ragdoll && ragdoll->IsStunned())
-		{
-			UE_LOG(LogTemp, Warning, TEXT("pickup Ragdoll"));
-			pickedUpRagdoll = ragdoll;
-			UpdatePickedUpRagdoll();
-		}
-		
-		auto object = Cast<ACargoInteractable>(HitInfo.GetActor());
-
-		if (object) 
-		{
-			UE_LOG(LogTemp, Warning, TEXT("interact 1"));
-			object->Interact(this);
-		}
-	}*/
-
 	if (Role < ROLE_Authority && !stunned)
 	{
 		ServerAction();
@@ -275,18 +261,21 @@ void ACargoPlayer::ServerAction_Implementation()
 	if (GetWorld()->LineTraceSingleByChannel(HitInfo, Start, End, ECollisionChannel::ECC_Visibility))
 	{
 		auto ragdoll = Cast<ACargoPlayer>(HitInfo.GetActor());
-		if (ragdoll && ragdoll->IsStunned())
+		if (ragdoll && ragdoll->IsStunned() && pickedUpRagdoll == nullptr)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("pickup Ragdoll"));
 			pickedUpRagdoll = ragdoll;
+			grabber->GrabComponent(ragdoll->GetThirdPersonStaticMesh(), NAME_None, ragdoll->GetThirdPersonStaticMesh()->GetComponentLocation(), true);
 			UpdatePickedUpRagdoll();
+		}
+		else if (pickedUpRagdoll != nullptr)
+		{
+			pickedUpRagdoll = nullptr;
 		}
 
 		auto object = Cast<ACargoInteractable>(HitInfo.GetActor());
-
+		
 		if (object)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("interact 1"));
 			object->Interact(this);
 		}
 	}
@@ -299,6 +288,7 @@ bool ACargoPlayer::ServerAction_Validate()
 
 void ACargoPlayer::UpdatePickedUpRagdoll()
 {
+	grabber->SetTargetLocation(holdPlace->GetComponentLocation());
 	ServerUpdatePickedUpRagdoll();
 }
 
@@ -307,6 +297,7 @@ void ACargoPlayer::ServerUpdatePickedUpRagdoll_Implementation()
 	if (pickedUpRagdoll)
 	{
 		pickedUpRagdoll->SetActorLocation(holdPlace->GetComponentLocation());
+		grabber->SetTargetLocation(holdPlace->GetComponentLocation());
 	}
 }
 

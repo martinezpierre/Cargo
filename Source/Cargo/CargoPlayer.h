@@ -51,6 +51,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cargo - Character")
 	UArrowComponent* holdPlace;
 
+	//use this to grab the ragdoll
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cargo - Character")
+	UPhysicsHandleComponent* grabber;
+
 	//length of the vector when a player fire
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cargo - variables")
 	float hitLength;
